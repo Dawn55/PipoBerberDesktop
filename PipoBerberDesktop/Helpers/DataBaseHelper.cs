@@ -15,5 +15,9 @@ namespace PipoBerberDesktop.Helpers
             
             return new SqlConnection("Server=DESKTOP-TD4GF4B\\SQLEXPRESS;Database=PipoBarberDb;Trusted_Connection=True;TrustServerCertificate=True;");
         }
+        public static string GetConnectionString()
+        {
+            return "Server=DESKTOP-TD4GF4B\\SQLEXPRESS;Database=PipoBarberDb;Trusted_Connection=True;TrustServerCertificate=True;";
+        }
     }
 }

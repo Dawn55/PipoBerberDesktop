@@ -62,12 +62,25 @@
             dataGridViewAppointmentReplies = new DataGridView();
             dataGridViewAppointments = new DataGridView();
             tabPage3 = new TabPage();
+            buttonRefresh = new MaterialSkin.Controls.MaterialButton();
+            buttonDelete = new MaterialSkin.Controls.MaterialButton();
+            buttonEdit = new MaterialSkin.Controls.MaterialButton();
+            buttonAdd = new MaterialSkin.Controls.MaterialButton();
+            labelBalance = new Label();
+            labelExpenses = new Label();
+            labelIncome = new Label();
+            dataGridViewTransactions = new DataGridView();
+            dateTimePickerEnd = new DateTimePicker();
+            dateTimePickerStart = new DateTimePicker();
+            comboBoxViewType = new ComboBox();
             materialTabControl1.SuspendLayout();
             tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridViewUsers).BeginInit();
             tabPage2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridViewAppointmentReplies).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dataGridViewAppointments).BeginInit();
+            tabPage3.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dataGridViewTransactions).BeginInit();
             SuspendLayout();
             // 
             // tabImageList
@@ -450,6 +463,17 @@
             // 
             // tabPage3
             // 
+            tabPage3.Controls.Add(buttonRefresh);
+            tabPage3.Controls.Add(buttonDelete);
+            tabPage3.Controls.Add(buttonEdit);
+            tabPage3.Controls.Add(buttonAdd);
+            tabPage3.Controls.Add(labelBalance);
+            tabPage3.Controls.Add(labelExpenses);
+            tabPage3.Controls.Add(labelIncome);
+            tabPage3.Controls.Add(dataGridViewTransactions);
+            tabPage3.Controls.Add(dateTimePickerEnd);
+            tabPage3.Controls.Add(dateTimePickerStart);
+            tabPage3.Controls.Add(comboBoxViewType);
             tabPage3.ImageKey = "make-money.png";
             tabPage3.Location = new Point(4, 31);
             tabPage3.Name = "tabPage3";
@@ -457,6 +481,150 @@
             tabPage3.TabIndex = 2;
             tabPage3.Text = "Gelir Gider Tablosu";
             tabPage3.UseVisualStyleBackColor = true;
+            // 
+            // buttonRefresh
+            // 
+            buttonRefresh.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            buttonRefresh.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
+            buttonRefresh.Depth = 0;
+            buttonRefresh.HighEmphasis = true;
+            buttonRefresh.Icon = null;
+            buttonRefresh.Location = new Point(270, 302);
+            buttonRefresh.Margin = new Padding(4, 6, 4, 6);
+            buttonRefresh.MouseState = MaterialSkin.MouseState.HOVER;
+            buttonRefresh.Name = "buttonRefresh";
+            buttonRefresh.NoAccentTextColor = Color.Empty;
+            buttonRefresh.Size = new Size(203, 36);
+            buttonRefresh.TabIndex = 10;
+            buttonRefresh.Text = "İstenilen Verileri Getir";
+            buttonRefresh.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
+            buttonRefresh.UseAccentColor = false;
+            buttonRefresh.UseVisualStyleBackColor = true;
+            buttonRefresh.Click += buttonRefresh_Click;
+            // 
+            // buttonDelete
+            // 
+            buttonDelete.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            buttonDelete.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
+            buttonDelete.Depth = 0;
+            buttonDelete.HighEmphasis = true;
+            buttonDelete.Icon = null;
+            buttonDelete.Location = new Point(509, 275);
+            buttonDelete.Margin = new Padding(4, 6, 4, 6);
+            buttonDelete.MouseState = MaterialSkin.MouseState.HOVER;
+            buttonDelete.Name = "buttonDelete";
+            buttonDelete.NoAccentTextColor = Color.Empty;
+            buttonDelete.Size = new Size(64, 36);
+            buttonDelete.TabIndex = 9;
+            buttonDelete.Text = "Sil";
+            buttonDelete.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
+            buttonDelete.UseAccentColor = false;
+            buttonDelete.UseVisualStyleBackColor = true;
+            buttonDelete.Click += buttonDelete_Click;
+            // 
+            // buttonEdit
+            // 
+            buttonEdit.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            buttonEdit.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
+            buttonEdit.Depth = 0;
+            buttonEdit.HighEmphasis = true;
+            buttonEdit.Icon = null;
+            buttonEdit.Location = new Point(504, 227);
+            buttonEdit.Margin = new Padding(4, 6, 4, 6);
+            buttonEdit.MouseState = MaterialSkin.MouseState.HOVER;
+            buttonEdit.Name = "buttonEdit";
+            buttonEdit.NoAccentTextColor = Color.Empty;
+            buttonEdit.Size = new Size(85, 36);
+            buttonEdit.TabIndex = 8;
+            buttonEdit.Text = "Düzenle";
+            buttonEdit.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
+            buttonEdit.UseAccentColor = false;
+            buttonEdit.UseVisualStyleBackColor = true;
+            buttonEdit.Click += buttonEdit_Click;
+            // 
+            // buttonAdd
+            // 
+            buttonAdd.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            buttonAdd.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
+            buttonAdd.Depth = 0;
+            buttonAdd.HighEmphasis = true;
+            buttonAdd.Icon = null;
+            buttonAdd.Location = new Point(509, 177);
+            buttonAdd.Margin = new Padding(4, 6, 4, 6);
+            buttonAdd.MouseState = MaterialSkin.MouseState.HOVER;
+            buttonAdd.Name = "buttonAdd";
+            buttonAdd.NoAccentTextColor = Color.Empty;
+            buttonAdd.Size = new Size(64, 36);
+            buttonAdd.TabIndex = 7;
+            buttonAdd.Text = "Ekle";
+            buttonAdd.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
+            buttonAdd.UseAccentColor = false;
+            buttonAdd.UseVisualStyleBackColor = true;
+            buttonAdd.Click += buttonAdd_Click;
+            // 
+            // labelBalance
+            // 
+            labelBalance.AutoSize = true;
+            labelBalance.Location = new Point(323, 251);
+            labelBalance.Name = "labelBalance";
+            labelBalance.Size = new Size(105, 15);
+            labelBalance.TabIndex = 6;
+            labelBalance.Text = "Toplam Net Bakiye";
+            // 
+            // labelExpenses
+            // 
+            labelExpenses.AutoSize = true;
+            labelExpenses.Location = new Point(323, 221);
+            labelExpenses.Name = "labelExpenses";
+            labelExpenses.Size = new Size(77, 15);
+            labelExpenses.TabIndex = 5;
+            labelExpenses.Text = "Toplam Gider";
+            // 
+            // labelIncome
+            // 
+            labelIncome.AutoSize = true;
+            labelIncome.Location = new Point(323, 191);
+            labelIncome.Name = "labelIncome";
+            labelIncome.Size = new Size(73, 15);
+            labelIncome.TabIndex = 4;
+            labelIncome.Text = "Toplam Gelir";
+            // 
+            // dataGridViewTransactions
+            // 
+            dataGridViewTransactions.AllowUserToAddRows = false;
+            dataGridViewTransactions.AllowUserToDeleteRows = false;
+            dataGridViewTransactions.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridViewTransactions.Location = new Point(187, 0);
+            dataGridViewTransactions.Name = "dataGridViewTransactions";
+            dataGridViewTransactions.ReadOnly = true;
+            dataGridViewTransactions.Size = new Size(387, 172);
+            dataGridViewTransactions.TabIndex = 3;
+            // 
+            // dateTimePickerEnd
+            // 
+            dateTimePickerEnd.Enabled = false;
+            dateTimePickerEnd.Location = new Point(97, 261);
+            dateTimePickerEnd.Name = "dateTimePickerEnd";
+            dateTimePickerEnd.Size = new Size(200, 23);
+            dateTimePickerEnd.TabIndex = 2;
+            // 
+            // dateTimePickerStart
+            // 
+            dateTimePickerStart.Enabled = false;
+            dateTimePickerStart.Location = new Point(97, 232);
+            dateTimePickerStart.Name = "dateTimePickerStart";
+            dateTimePickerStart.Size = new Size(200, 23);
+            dateTimePickerStart.TabIndex = 1;
+            // 
+            // comboBoxViewType
+            // 
+            comboBoxViewType.FormattingEnabled = true;
+            comboBoxViewType.Items.AddRange(new object[] { "Tümü", "Bugün", "Bu Ay", "İstenilen Zaman dilimi" });
+            comboBoxViewType.Location = new Point(123, 203);
+            comboBoxViewType.Name = "comboBoxViewType";
+            comboBoxViewType.Size = new Size(121, 23);
+            comboBoxViewType.TabIndex = 0;
+            comboBoxViewType.SelectedIndexChanged += comboBoxViewType_SelectedIndexChanged;
             // 
             // NavForm
             // 
@@ -476,6 +644,9 @@
             tabPage2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridViewAppointmentReplies).EndInit();
             ((System.ComponentModel.ISupportInitialize)dataGridViewAppointments).EndInit();
+            tabPage3.ResumeLayout(false);
+            tabPage3.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)dataGridViewTransactions).EndInit();
             ResumeLayout(false);
         }
 
@@ -512,5 +683,16 @@
         private TextBox tbSendReply;
         private MaterialSkin.Controls.MaterialButton btnSendReply;
         private Label lblSendReply;
+        private DataGridView dataGridViewTransactions;
+        private DateTimePicker dateTimePickerEnd;
+        private DateTimePicker dateTimePickerStart;
+        private ComboBox comboBoxViewType;
+        private MaterialSkin.Controls.MaterialButton buttonRefresh;
+        private MaterialSkin.Controls.MaterialButton buttonDelete;
+        private MaterialSkin.Controls.MaterialButton buttonEdit;
+        private MaterialSkin.Controls.MaterialButton buttonAdd;
+        private Label labelBalance;
+        private Label labelExpenses;
+        private Label labelIncome;
     }
 }

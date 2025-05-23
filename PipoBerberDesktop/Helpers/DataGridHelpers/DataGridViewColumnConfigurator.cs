@@ -88,9 +88,9 @@ namespace PipoBerberDesktop.Helpers.DataGridHelpers
                 tokenColumn.Visible = false;
                 _dataGridView.Columns.Add(tokenColumn);
 
-               
+
                 FormatStatusColumn();
-                
+
             }
             catch (Exception ex)
             {
@@ -170,38 +170,107 @@ namespace PipoBerberDesktop.Helpers.DataGridHelpers
             {
                 _dataGridView.CellFormatting += (sender, e) =>
                 {
-                        if (e.ColumnIndex == _dataGridView.Columns["status"].Index && e.RowIndex >= 0)
+                    if (e.ColumnIndex == _dataGridView.Columns["status"].Index && e.RowIndex >= 0)
+                    {
+
+                        var statusValue = Convert.ToInt32(_dataGridView.Rows[e.RowIndex].Cells[e.ColumnIndex].Value);
+
+
+                        switch (statusValue)
                         {
-
-                            var statusValue = Convert.ToInt32(_dataGridView.Rows[e.RowIndex].Cells[e.ColumnIndex].Value);
-
-
-                            switch (statusValue)
-                            {
-                                case 0:
-                                    e.Value = "Beklemede";
-                                    e.CellStyle.ForeColor = Color.Orange;
-                                    break;
-                                case 1:
-                                    e.Value = "Onaylandı";
-                                    e.CellStyle.ForeColor = Color.Green;
-                                    break;
-                                case 2:
-                                    e.Value = "İptal Edildi";
-                                    e.CellStyle.ForeColor = Color.Red;
-                                    break;
-                                case 3:
-                                    e.Value = "Tamamlandı";
-                                    e.CellStyle.ForeColor = Color.Blue;
-                                    break;
-                                default:
-                                    e.Value = "Bilinmiyor";
-                                    break;
-                            }
+                            case 0:
+                                e.Value = "Beklemede";
+                                e.CellStyle.ForeColor = Color.Orange;
+                                break;
+                            case 1:
+                                e.Value = "Onaylandı";
+                                e.CellStyle.ForeColor = Color.Green;
+                                break;
+                            case 2:
+                                e.Value = "İptal Edildi";
+                                e.CellStyle.ForeColor = Color.Red;
+                                break;
+                            case 3:
+                                e.Value = "Tamamlandı";
+                                e.CellStyle.ForeColor = Color.Blue;
+                                break;
+                            default:
+                                e.Value = "Bilinmiyor";
+                                break;
                         }
-                    
+                    }
+
                 };
             }
+        }
+        public void ConfigureTransactionColumns()
+        {
+            _dataGridView.Columns.Clear();
+            _dataGridView.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                Name = "Id",
+                HeaderText = "ID",
+                DataPropertyName = "Id",
+                Visible = false
+            });
+            _dataGridView.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                Name = "Type",
+                HeaderText = "Tür",
+                DataPropertyName = "Type"
+            });
+            _dataGridView.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                Name = "Amount",
+                HeaderText = "Tutar",
+                DataPropertyName = "Amount",
+                DefaultCellStyle = new DataGridViewCellStyle { Format = "C2" }
+            });
+            _dataGridView.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                Name = "Date",
+                HeaderText = "Tarih",
+                DataPropertyName = "Date",
+                DefaultCellStyle = new DataGridViewCellStyle { Format = "yyyy-MM-dd" }
+            });
+            _dataGridView.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                Name = "Description",
+                HeaderText = "Açıklama",
+                DataPropertyName = "Description"
+            });
+            _dataGridView.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                Name = "CreatedAt",
+                HeaderText = "Oluşturulma Tarihi",
+                DataPropertyName = "CreatedAt",
+                DefaultCellStyle = new DataGridViewCellStyle { Format = "yyyy-MM-dd HH:mm" }
+            });
+            // Tür sütunu için Türkçe görüntüleme
+            _dataGridView.CellFormatting += (s, e) =>
+            {
+                if (e.ColumnIndex >= 0 && _dataGridView.Columns[e.ColumnIndex].Name == "Type")
+                {
+                    if (e.Value?.ToString() == "income")
+                        e.Value = "Gelir";
+                    else if (e.Value?.ToString() == "expense")
+                        e.Value = "Gider";
+                }
+            };
+
+            // Color rows based on transaction type 
+            //_dataGridView.RowPrePaint += (s, e) =>
+            //{
+            //    if (e.RowIndex >= 0 && e.RowIndex < _dataGridView.Rows.Count)
+            //    {
+            //        var row = _dataGridView.Rows[e.RowIndex];
+            //        var type = row.Cells["Type"].Value?.ToString();
+            //        if (type == "income")
+            //            row.DefaultCellStyle.BackColor = Color.LightGreen;
+            //        else if (type == "expense")
+            //            row.DefaultCellStyle.BackColor = Color.LightCoral;
+            //    }
+            //};
         }
         private void FormatSenderRoleColumn()
         {

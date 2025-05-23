@@ -1,7 +1,9 @@
 ﻿using Dapper;
+using Microsoft.Data.SqlClient;
 using PipoBerberDesktop.Entities;
 using PipoBerberDesktop.Helpers;
 using PipoBerberDesktop.Helpers.DataGridHelpers;
+using PipoBerberDesktop.Repositories;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -16,21 +18,25 @@ namespace PipoBerberDesktop
 {
     public partial class NavForm : MaterialSkin.Controls.MaterialForm
     {
+        private static string connectionString = DatabaseHelper.GetConnectionString();
+        private readonly TransactionRepository _repository = new TransactionRepository(connectionString);
         public NavForm()
         {
             InitializeComponent();
             MaterialSkinManager.ApplyMaterialSkin(this);
         }
 
-        private void NavForm_Load(object sender, EventArgs e)
+        private async void NavForm_Load(object sender, EventArgs e)
         {
             this.Text = "Hoşgeldiniz " + Session.UserName + " " + Session.UserSurname;
             this.Font = new Font("Tahoma", 12, FontStyle.Bold);
             this.MaximizeBox = false;
+            comboBoxViewType.SelectedIndex = 0;
             LoadStylesForUsersTab();
             LoadStylesForAppointmentsTab();
             LoadUsers();
             LoadAppointments();
+            await LoadTransactions();
 
         }
         private void LoadUsers()
@@ -57,7 +63,7 @@ namespace PipoBerberDesktop
             DataGridViewColumnConfigurator configurator = new DataGridViewColumnConfigurator(dataGridViewAppointments);
             using (var connection = DatabaseHelper.GetConnection())
             {
-                // Randevular ve kullanıcı bilgilerini birleştiren join sorgusu
+
                 string query = @"
             SELECT 
                 a.id, 
@@ -82,6 +88,7 @@ namespace PipoBerberDesktop
                 // Önce tüm sütunları kontrol et ve ayarla
                 configurator.ConfigureAppointmentColumns();
             }
+
         }
         private void LoadAppointmentReplies()
         {
@@ -124,6 +131,72 @@ namespace PipoBerberDesktop
                 configurator.ConfigureAppointmentRepliesColumns();
             }
         }
+        private async Task LoadTransactions()
+        {
+            try
+            {
+
+                string viewType = comboBoxViewType.SelectedItem?.ToString() ?? "Tümü";
+
+                var transactions = viewType switch
+                {
+                    "Bugün" => await _repository.GetTodayTransactionsAsync(),
+                    "Bu Ay" => await _repository.GetTransactionsByMonthAsync(DateTime.Now.Year, DateTime.Now.Month),
+                    "İstenilen Zaman dilimi" => await _repository.GetTransactionsByDateRangeAsync(dateTimePickerStart.Value.Date, dateTimePickerEnd.Value.Date),
+                    "Tümü" => await _repository.GetAllTransactionsAsync()
+                };
+                DataGridViewColumnConfigurator configurator = new DataGridViewColumnConfigurator(dataGridViewTransactions);
+                configurator.ConfigureTransactionColumns();
+
+                dataGridViewTransactions.DataSource = transactions.ToList();
+
+
+
+                await UpdateSummaryLabels(viewType);
+
+                if (dataGridViewTransactions.Columns["Id"] != null)
+                {
+                    dataGridViewTransactions.Columns["Id"].Visible = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading transactions: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private async Task UpdateSummaryLabels(string viewType)
+        {
+            DateTime? startDate = null, endDate = null;
+
+            switch (viewType)
+            {
+                case "Bugün":
+                    startDate = endDate = DateTime.Now.Date;
+                    break;
+                case "Bu Ay":
+                    startDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+                    endDate = startDate.Value.AddMonths(1).AddDays(-1);
+                    break;
+                case "İstenilen Zaman dilimi":
+                    startDate = dateTimePickerStart.Value.Date;
+                    endDate = dateTimePickerEnd.Value.Date;
+                    break;
+            }
+
+            var summary = await _repository.GetTransactionSummaryAsync(startDate, endDate);
+            var summaryList = summary.ToList();
+
+            var income = summaryList.FirstOrDefault(s => s.Type == "income")?.TotalAmount ?? 0;
+            var expenses = summaryList.FirstOrDefault(s => s.Type == "expense")?.TotalAmount ?? 0;
+            var balance = income - expenses;
+
+            labelIncome.Text = $"Toplam Gelir: {income:C}";
+            labelExpenses.Text = $"Toplam Gider: {expenses:C}";
+            labelBalance.Text = $"Net Bakiye: {balance:C}";
+            labelBalance.ForeColor = balance >= 0 ? Color.Green : Color.Red;
+        }
+
         private void LoadStylesForUsersTab()
         {
             lblUserName.Font = new Font("Tahoma", 9, FontStyle.Regular);
@@ -462,20 +535,20 @@ namespace PipoBerberDesktop
 
         private void btnUpdateAppointment_Click(object sender, EventArgs e)
         {
-            
+
             if (dataGridViewAppointments.SelectedRows.Count == 0)
             {
                 MessageBox.Show("Lütfen güncellemek için bir randevu seçin.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            
+
             int appointmentId = Convert.ToInt32(dataGridViewAppointments.SelectedRows[0].Cells["id"].Value);
 
-           
+
             int newStatus = cbStatus.SelectedIndex;
 
-            
+
             var result = MessageBox.Show("Randevu durumunu güncellemek istediğinize emin misiniz?",
                                        "Randevu Güncelleme",
                                        MessageBoxButtons.YesNo,
@@ -487,7 +560,7 @@ namespace PipoBerberDesktop
                 {
                     using (var connection = DatabaseHelper.GetConnection())
                     {
-                        
+
                         string updateQuery = "UPDATE Appointments SET status = @Status WHERE id = @Id";
 
                         connection.Execute(updateQuery, new
@@ -498,7 +571,7 @@ namespace PipoBerberDesktop
 
                         MessageBox.Show("Randevu durumu başarıyla güncellendi.", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                        
+
                         LoadAppointments();
                     }
                 }
@@ -511,28 +584,28 @@ namespace PipoBerberDesktop
 
         private void btnSendReply_Click(object sender, EventArgs e)
         {
-            
+
             if (dataGridViewAppointments.SelectedRows.Count == 0)
             {
                 MessageBox.Show("Lütfen yanıt göndermek için bir randevu seçin.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            
+
             if (string.IsNullOrWhiteSpace(tbSendReply.Text))
             {
                 MessageBox.Show("Lütfen göndermek için bir mesaj yazın.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            
+
             int appointmentId = Convert.ToInt32(dataGridViewAppointments.SelectedRows[0].Cells["id"].Value);
 
             try
             {
                 using (var connection = DatabaseHelper.GetConnection())
                 {
-                    
+
                     string insertQuery = @"
                 INSERT INTO AppointmentMessages (appointmentId, senderId, text, createdAt)
                 VALUES (@AppointmentId, @SenderId, @Text, @CreatedAt)";
@@ -545,13 +618,13 @@ namespace PipoBerberDesktop
                         CreatedAt = DateTime.Now
                     });
 
-                    
+
                     MessageBox.Show("Yanıtınız başarıyla gönderildi.", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                    
+
                     tbSendReply.Clear();
 
-                    
+
                     LoadAppointmentReplies();
                 }
             }
@@ -559,6 +632,75 @@ namespace PipoBerberDesktop
             {
                 MessageBox.Show($"Yanıt gönderme sırasında bir hata oluştu: {ex.Message}", "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private async void comboBoxViewType_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            bool isCustomRange = comboBoxViewType.SelectedItem.ToString() == "İstenilen Zaman dilimi";
+            dateTimePickerStart.Enabled = isCustomRange;
+            dateTimePickerEnd.Enabled = isCustomRange;
+
+            await LoadTransactions();
+        }
+
+        private async void buttonAdd_Click(object sender, EventArgs e)
+        {
+            var addForm = new AddEditTransactionForm();
+            if (addForm.ShowDialog() == DialogResult.OK)
+            {
+                await _repository.AddTransactionAsync(addForm.Transaction);
+                await LoadTransactions();
+            }
+        }
+
+        private async void buttonEdit_Click(object sender, EventArgs e)
+        {
+            if (dataGridViewTransactions.SelectedRows.Count == 0)
+            {
+                MessageBox.Show("Please select a transaction to edit.", "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var selectedRow = dataGridViewTransactions.SelectedRows[0];
+            var transaction = new Transaction
+            {
+                Id = (int)selectedRow.Cells["Id"].Value,
+                Type = selectedRow.Cells["Type"].Value.ToString(),
+                Amount = (decimal)selectedRow.Cells["Amount"].Value,
+                Date = (DateTime)selectedRow.Cells["Date"].Value,
+                Description = selectedRow.Cells["Description"].Value?.ToString()
+            };
+
+            var editForm = new AddEditTransactionForm(transaction);
+            if (editForm.ShowDialog() == DialogResult.OK)
+            {
+                //await _repository.UpdateTransactionAsync(editForm.Transaction);
+                await LoadTransactions();
+            }
+        }
+
+        private async void buttonDelete_Click(object sender, EventArgs e)
+        {
+            if (dataGridViewTransactions.SelectedRows.Count == 0)
+            {
+                MessageBox.Show("Please select a transaction to delete.", "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var result = MessageBox.Show("Are you sure you want to delete this transaction?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (result == DialogResult.Yes)
+            {
+                var selectedRow = dataGridViewTransactions.SelectedRows[0];
+                int id = (int)selectedRow.Cells["Id"].Value;
+
+                await _repository.DeleteTransactionAsync(id);
+                await LoadTransactions();
+            }
+        }
+
+        private async void buttonRefresh_Click(object sender, EventArgs e)
+        {
+            await LoadTransactions();
         }
     }
 }
