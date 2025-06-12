@@ -108,6 +108,7 @@
             materialTabControl1.SelectedIndex = 0;
             materialTabControl1.Size = new Size(794, 383);
             materialTabControl1.TabIndex = 0;
+            materialTabControl1.SelectedIndexChanged += materialTabControl1_SelectedIndexChanged;
             // 
             // tabPage1
             // 
@@ -284,7 +285,7 @@
             // 
             dataGridViewUsers.AllowUserToAddRows = false;
             dataGridViewUsers.AllowUserToDeleteRows = false;
-            dataGridViewUsers.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
+            dataGridViewUsers.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dataGridViewUsers.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
             dataGridViewUsers.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dataGridViewUsers.Location = new Point(86, 34);
@@ -292,6 +293,7 @@
             dataGridViewUsers.ReadOnly = true;
             dataGridViewUsers.Size = new Size(573, 202);
             dataGridViewUsers.TabIndex = 0;
+            dataGridViewUsers.CellFormatting += dataGridViewUsers_CellFormatting;
             dataGridViewUsers.SelectionChanged += dataGridViewUsers_SelectionChanged;
             // 
             // tabPage2
@@ -428,6 +430,7 @@
             tbAppointmentSearch.Name = "tbAppointmentSearch";
             tbAppointmentSearch.Size = new Size(171, 23);
             tbAppointmentSearch.TabIndex = 3;
+            tbAppointmentSearch.TextChanged += tbAppointmentSearch_TextChanged;
             // 
             // lblAppointmentSearch
             // 

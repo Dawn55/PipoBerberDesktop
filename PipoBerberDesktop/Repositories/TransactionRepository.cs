@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Microsoft.Data.SqlClient;
+using Npgsql;
 using PipoBerberDesktop.Entities;
 
 public class TransactionRepository
@@ -19,7 +20,7 @@ public class TransactionRepository
             VALUES (@Type, @Amount, @Date, @Description);
             SELECT CAST(SCOPE_IDENTITY() as int);";
 
-        using var connection = new SqlConnection(_connectionString);
+        using var connection = new NpgsqlConnection(_connectionString);
         return await connection.QuerySingleAsync<int>(sql, transaction);
     }
 
@@ -28,7 +29,7 @@ public class TransactionRepository
     {
         const string sql = "SELECT * FROM Transactions ORDER BY date DESC, createdAt DESC";
 
-        using var connection = new SqlConnection(_connectionString);
+        using var connection = new NpgsqlConnection(_connectionString);
         return await connection.QueryAsync<Transaction>(sql);
     }
 
@@ -40,7 +41,7 @@ public class TransactionRepository
             WHERE date >= @StartDate AND date <= @EndDate 
             ORDER BY date DESC, createdAt DESC";
 
-        using var connection = new SqlConnection(_connectionString);
+        using var connection = new NpgsqlConnection(_connectionString);
         return await connection.QueryAsync<Transaction>(sql, new { StartDate = startDate, EndDate = endDate });
     }
 
@@ -52,7 +53,7 @@ public class TransactionRepository
             WHERE YEAR(date) = @Year AND MONTH(date) = @Month 
             ORDER BY date DESC, createdAt DESC";
 
-        using var connection = new SqlConnection(_connectionString);
+        using var connection = new NpgsqlConnection(_connectionString);
         return await connection.QueryAsync<Transaction>(sql, new { Year = year, Month = month });
     }
 
@@ -64,7 +65,7 @@ public class TransactionRepository
         WHERE date = CAST(GETDATE() AS DATE)
         ORDER BY createdAt DESC";
 
-        using var connection = new SqlConnection(_connectionString);
+        using var connection = new NpgsqlConnection(_connectionString);
         var result = await connection.QueryAsync<Transaction>(sql);
         return result;
     }
@@ -83,7 +84,7 @@ public class TransactionRepository
 
         sql += " GROUP BY type";
 
-        using var connection = new SqlConnection(_connectionString);
+        using var connection = new NpgsqlConnection(_connectionString);
         return await connection.QueryAsync<TransactionSummary>(sql, new { StartDate = startDate, EndDate = endDate });
     }
 
@@ -103,7 +104,7 @@ public class TransactionRepository
             GROUP BY YEAR(date), MONTH(date), DATENAME(month, date)
             ORDER BY MONTH(date)";
 
-        using var connection = new SqlConnection(_connectionString);
+        using var connection = new NpgsqlConnection(_connectionString);
         return await connection.QueryAsync<MonthlyReport>(sql, new { Year = year });
     }
 
@@ -115,7 +116,7 @@ public class TransactionRepository
             SET type = @Type, amount = @Amount, date = @Date, description = @Description 
             WHERE id = @Id";
 
-        using var connection = new SqlConnection(_connectionString);
+        using var connection = new NpgsqlConnection(_connectionString);
         var rowsAffected = await connection.ExecuteAsync(sql, transaction);
         return rowsAffected > 0;
     }
@@ -125,7 +126,7 @@ public class TransactionRepository
     {
         const string sql = "DELETE FROM Transactions WHERE id = @Id";
 
-        using var connection = new SqlConnection(_connectionString);
+        using var connection = new NpgsqlConnection(_connectionString);
         var rowsAffected = await connection.ExecuteAsync(sql, new { Id = id });
         return rowsAffected > 0;
     }
@@ -143,7 +144,7 @@ public class TransactionRepository
             sql += " WHERE date >= @StartDate AND date <= @EndDate";
         }
 
-        using var connection = new SqlConnection(_connectionString);
+        using var connection = new NpgsqlConnection(_connectionString);
         var balance = await connection.QuerySingleOrDefaultAsync<decimal?>(sql, new { StartDate = startDate, EndDate = endDate });
         return balance ?? 0;
     }

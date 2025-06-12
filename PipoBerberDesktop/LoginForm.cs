@@ -24,7 +24,7 @@ namespace PipoBerberDesktop
             using (var connection = DatabaseHelper.GetConnection())
             {
 
-                var user = connection.QueryFirstOrDefault("SELECT * FROM Users WHERE email = @Email AND isAdmin = 1",
+                var user = connection.QueryFirstOrDefault(@"SELECT * FROM ""User"" WHERE email = @Email AND ""isAdmin"" = true",
                     new { Email = tbEmail.Text });
 
                 if (user != null)

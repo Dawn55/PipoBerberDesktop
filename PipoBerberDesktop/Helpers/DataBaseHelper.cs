@@ -1,4 +1,5 @@
 ﻿using Microsoft.Data.SqlClient;
+using Npgsql;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -13,11 +14,12 @@ namespace PipoBerberDesktop.Helpers
         public static IDbConnection GetConnection()
         {
             
-            return new SqlConnection("Server=DESKTOP-TD4GF4B\\SQLEXPRESS;Database=PipoBarberDb;Trusted_Connection=True;TrustServerCertificate=True;");
+            return new NpgsqlConnection("Host=aws-0-eu-central-1.pooler.supabase.com;Port=6543;Username=postgres.eryvmyaotsqfapjgawqh;Password=554822597ys;Database=postgres;Pooling=true");
         }
         public static string GetConnectionString()
         {
-            return "Server=DESKTOP-TD4GF4B\\SQLEXPRESS;Database=PipoBarberDb;Trusted_Connection=True;TrustServerCertificate=True;";
+            return "Host=aws-0-eu-central-1.pooler.supabase.com;Port=6543;Username=postgres.eryvmyaotsqfapjgawqh;Password=554822597ys;Database=postgres;Pooling=true"
+;
         }
     }
 }

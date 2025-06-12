@@ -19,7 +19,10 @@ namespace PipoBerberDesktop
     public partial class NavForm : MaterialSkin.Controls.MaterialForm
     {
         private static string connectionString = DatabaseHelper.GetConnectionString();
-        private readonly TransactionRepository _repository = new TransactionRepository(connectionString);
+        private readonly TransactionRepository _transactionRepository = new TransactionRepository(connectionString);
+        private readonly AppointmentRepository _appointmentRepository = new AppointmentRepository(connectionString);
+        private readonly AppointmentRepliesRepository _appointmentRepliesRepository = new AppointmentRepliesRepository(connectionString);
+        private readonly UserRepository _userRepository = new UserRepository(connectionString);
         public NavForm()
         {
             InitializeComponent();
@@ -39,97 +42,37 @@ namespace PipoBerberDesktop
             await LoadTransactions();
 
         }
+        private async void materialTabControl1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+        }
         private void LoadUsers()
         {
             using (var connection = DatabaseHelper.GetConnection())
             {
-                var users = connection.Query<User>("SELECT * FROM Users").ToList();
-                dataGridViewUsers.DataSource = users;
-
-                dataGridViewUsers.Columns["id"].Visible = false;
-                dataGridViewUsers.Columns["password"].Visible = false;
-                dataGridViewUsers.Columns["isGuest"].Visible = false;
-                dataGridViewUsers.Columns["PhoneNumber"].HeaderText = "Telefon Numarası";
-                dataGridViewUsers.Columns["email"].HeaderText = "E-posta";
-                dataGridViewUsers.Columns["isAdmin"].HeaderText = "Rol";
-                dataGridViewUsers.Columns["name"].HeaderText = "Adı";
-                dataGridViewUsers.Columns["surname"].HeaderText = "Soyadı";
-                dataGridViewUsers.Columns["CreatedAt"].HeaderText = "Oluşturulma Zamanı";
-                dataGridViewUsers.Columns["UpdatedAt"].HeaderText = "Güncellenme Zamanı";
+                DataGridViewColumnConfigurator configurator = new DataGridViewColumnConfigurator(dataGridViewUsers);
+                dataGridViewUsers.DataSource = _userRepository.GetAllUsers();
+                configurator.ConfigureUsersColumns();
             }
         }
         private void LoadAppointments()
         {
             DataGridViewColumnConfigurator configurator = new DataGridViewColumnConfigurator(dataGridViewAppointments);
-            using (var connection = DatabaseHelper.GetConnection())
-            {
-
-                string query = @"
-            SELECT 
-                a.id, 
-                a.userId, 
-                a.description, 
-                a.date, 
-                a.time, 
-                a.status,
-                a.token,
-                a.createdAt,
-                u.name + ' ' + u.surname as UserFullName
-            FROM Appointments a
-            INNER JOIN Users u ON a.userId = u.id
-            ORDER BY a.date DESC, a.time DESC";
-
-                // Genişletilmiş veri modelini tutmak için anonim bir tip kullanıyoruz
-                var appointmentsWithUserNames = connection.Query(query).ToList();
-
-                // DataGridView'a veriyi bağla
-                dataGridViewAppointments.DataSource = appointmentsWithUserNames;
-
-                // Önce tüm sütunları kontrol et ve ayarla
-                configurator.ConfigureAppointmentColumns();
-            }
-
+            dataGridViewAppointments.DataSource = _appointmentRepository.GetAllAppointments();
+            configurator.ConfigureAppointmentColumns();
         }
+
         private void LoadAppointmentReplies()
         {
-            // Seçili bir randevu yoksa işlemi durdur
             if (dataGridViewAppointments.SelectedRows.Count == 0)
             {
-                // DataGridView'ı temizle
                 dataGridViewAppointmentReplies.DataSource = null;
                 return;
             }
-
-            // Seçili randevunun ID'sini al
             int appointmentId = Convert.ToInt32(dataGridViewAppointments.SelectedRows[0].Cells["id"].Value);
             DataGridViewColumnConfigurator configurator = new DataGridViewColumnConfigurator(dataGridViewAppointmentReplies);
-
-            using (var connection = DatabaseHelper.GetConnection())
-            {
-                // AppointmentMessages ve gönderen kullanıcı bilgilerini birleştiren join sorgusu
-                string query = @"
-            SELECT 
-                am.id,
-                am.appointmentId,
-                am.senderId,
-                am.text,
-                am.createdAt,
-                u.name + ' ' + u.surname as SenderFullName,
-                CASE WHEN u.isAdmin = 1 THEN 'Yönetici' ELSE 'Müşteri' END as SenderRole
-            FROM AppointmentMessages am
-            INNER JOIN Users u ON am.senderId = u.id
-            WHERE am.appointmentId = @AppointmentId
-            ORDER BY am.createdAt ASC";
-
-                // Sorguyu çalıştır ve sonuçları al
-                var appointmentMessages = connection.Query(query, new { AppointmentId = appointmentId }).ToList();
-
-                // DataGridView'a veriyi bağla
-                dataGridViewAppointmentReplies.DataSource = appointmentMessages;
-
-                // Sütunları yapılandır
-                configurator.ConfigureAppointmentRepliesColumns();
-            }
+            var appointmentMessages = _appointmentRepliesRepository.GetAppointRepliesByAppointmentId(appointmentId);
+            dataGridViewAppointmentReplies.DataSource = appointmentMessages;
+            configurator.ConfigureAppointmentRepliesColumns();
         }
         private async Task LoadTransactions()
         {
@@ -140,10 +83,10 @@ namespace PipoBerberDesktop
 
                 var transactions = viewType switch
                 {
-                    "Bugün" => await _repository.GetTodayTransactionsAsync(),
-                    "Bu Ay" => await _repository.GetTransactionsByMonthAsync(DateTime.Now.Year, DateTime.Now.Month),
-                    "İstenilen Zaman dilimi" => await _repository.GetTransactionsByDateRangeAsync(dateTimePickerStart.Value.Date, dateTimePickerEnd.Value.Date),
-                    "Tümü" => await _repository.GetAllTransactionsAsync()
+                    "Bugün" => await _transactionRepository.GetTodayTransactionsAsync(),
+                    "Bu Ay" => await _transactionRepository.GetTransactionsByMonthAsync(DateTime.Now.Year, DateTime.Now.Month),
+                    "İstenilen Zaman dilimi" => await _transactionRepository.GetTransactionsByDateRangeAsync(dateTimePickerStart.Value.Date, dateTimePickerEnd.Value.Date),
+                    "Tümü" => await _transactionRepository.GetAllTransactionsAsync()
                 };
                 DataGridViewColumnConfigurator configurator = new DataGridViewColumnConfigurator(dataGridViewTransactions);
                 configurator.ConfigureTransactionColumns();
@@ -184,7 +127,7 @@ namespace PipoBerberDesktop
                     break;
             }
 
-            var summary = await _repository.GetTransactionSummaryAsync(startDate, endDate);
+            var summary = await _transactionRepository.GetTransactionSummaryAsync(startDate, endDate);
             var summaryList = summary.ToList();
 
             var income = summaryList.FirstOrDefault(s => s.Type == "income")?.TotalAmount ?? 0;
@@ -236,7 +179,7 @@ namespace PipoBerberDesktop
             }
         }
 
-        private void btnUserUpdate_Click(object sender, EventArgs e)
+        private async void btnUserUpdate_Click(object sender, EventArgs e)
         {
 
             var result = MessageBox.Show("Seçili kullanıcıyı güncellemek istediğinize emin misiniz?", "Kullanıcı Güncelleme", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
@@ -262,30 +205,18 @@ namespace PipoBerberDesktop
                     bool isAdmin = cbRole.SelectedItem.ToString() == "Yönetici";
 
 
-                    using (var connection = DatabaseHelper.GetConnection())
-                    {
-                        string updateQuery = @"
-                    UPDATE Users 
-                    SET 
-                        name = @Name, 
-                        surname = @Surname, 
-                        email = @Email, 
-                        PhoneNumber = @PhoneNumber, 
-                        isAdmin = @IsAdmin, 
-                        UpdatedAt = @UpdatedAt
-                    WHERE id = @Id";
 
-                        connection.Execute(updateQuery, new
-                        {
-                            Name = updatedName,
-                            Surname = updatedSurname,
-                            Email = updatedEmail,
-                            PhoneNumber = updatedPhone,
-                            IsAdmin = isAdmin ? 1 : 0,
-                            UpdatedAt = DateTime.Now,
-                            Id = userId
-                        });
-                    }
+                    _userRepository.UpdateUser(new User
+                    {
+                        Name = updatedName,
+                        Surname = updatedSurname,
+                        Email = updatedEmail,
+                        PhoneNumber = updatedPhone,
+                        IsAdmin = isAdmin,
+                        UpdatedAt = DateTime.Now,
+                        Id = userId
+                    });
+
 
 
                     MessageBox.Show("Kullanıcı başarıyla güncellendi.", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -293,6 +224,7 @@ namespace PipoBerberDesktop
 
                     LoadUsers();
                     ClearFields();
+                    
                 }
                 else
                 {
@@ -300,12 +232,13 @@ namespace PipoBerberDesktop
                 }
             }
         }
-        private void dataGridViewAppointments_SelectionChanged(object sender, EventArgs e)
+        private async void dataGridViewAppointments_SelectionChanged(object sender, EventArgs e)
         {
 
-            LoadAppointmentReplies();
+            
             if (dataGridViewAppointments.SelectedRows.Count > 0)
             {
+                LoadAppointmentReplies();
                 cbStatus.SelectedIndex = Convert.ToInt32(dataGridViewAppointments.SelectedRows[0].Cells["status"].Value);
             }
         }
@@ -319,15 +252,12 @@ namespace PipoBerberDesktop
 
         private void tbUserSearch_TextChanged(object sender, EventArgs e)
         {
-            using (var connection = DatabaseHelper.GetConnection())
-            {
-                var products = connection.Query<User>("SELECT * FROM Users WHERE name LIKE @SearchTerm",
-                    new { SearchTerm = $"%{tbUserSearch.Text}%" }).AsList();
-                dataGridViewUsers.DataSource = products;
-            }
+
+            dataGridViewUsers.DataSource = _userRepository.GetFilteredUsers(tbUserSearch.Text);
+
         }
 
-        private void btnDelete_Click(object sender, EventArgs e)
+        private async void btnDelete_Click(object sender, EventArgs e)
         {
 
             if (dataGridViewUsers.SelectedRows.Count == 0)
@@ -354,49 +284,9 @@ namespace PipoBerberDesktop
             {
                 try
                 {
-                    using (var connection = DatabaseHelper.GetConnection())
-                    {
-
-                        connection.Open();
-                        using (var transaction = connection.BeginTransaction())
-                        {
-                            try
-                            {
-
-                                connection.Execute(
-                                    @"DELETE FROM AppointmentMessages 
-                              WHERE appointmentId IN (SELECT id FROM Appointments WHERE userId = @UserId)
-                              OR senderId = @UserId",
-                                    new { UserId = userId }, transaction);
-
-
-                                connection.Execute("DELETE FROM Appointments WHERE userId = @UserId",
-                                    new { UserId = userId }, transaction);
-
-
-                                connection.Execute("DELETE FROM Messages WHERE sender_id = @UserId OR receiver_id = @UserId",
-                                    new { UserId = userId }, transaction);
-
-
-                                connection.Execute("DELETE FROM Users WHERE id = @UserId",
-                                    new { UserId = userId }, transaction);
-
-
-                                transaction.Commit();
-                                MessageBox.Show("Kullanıcı ve ilişkili tüm veriler başarıyla silindi.", "İşlem Başarılı", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-
-                                LoadUsers();
-                                ClearFields();
-                            }
-                            catch (Exception ex)
-                            {
-
-                                transaction.Rollback();
-                                MessageBox.Show($"Silme işlemi sırasında bir hata oluştu: {ex.Message}", "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            }
-                        }
-                    }
+                    _userRepository.DeleteUser(userId);
+                    LoadUsers();
+                    ClearFields();
                 }
                 catch (Exception ex)
                 {
@@ -405,7 +295,7 @@ namespace PipoBerberDesktop
             }
         }
 
-        private void btnDeleteAppointment_Click(object sender, EventArgs e)
+        private async void btnDeleteAppointment_Click(object sender, EventArgs e)
         {
 
             if (dataGridViewAppointmentReplies.SelectedRows.Count > 0)
@@ -423,20 +313,15 @@ namespace PipoBerberDesktop
                 {
                     try
                     {
-                        using (var connection = DatabaseHelper.GetConnection())
-                        {
-                            // Delete the selected reply
-                            connection.Execute("DELETE FROM AppointmentMessages WHERE id = @ReplyId",
-                                              new { ReplyId = replyId });
-
-                            MessageBox.Show("Mesaj başarıyla silindi.",
+                        _appointmentRepliesRepository.DeleteAppointmentReply(replyId);
+                        MessageBox.Show("Mesaj başarıyla silindi.",
                                            "İşlem Başarılı",
                                            MessageBoxButtons.OK,
                                            MessageBoxIcon.Information);
 
 
-                            LoadAppointmentReplies();
-                        }
+                       LoadAppointmentReplies();
+
                     }
                     catch (Exception ex)
                     {
@@ -463,46 +348,12 @@ namespace PipoBerberDesktop
                 {
                     try
                     {
-                        using (var connection = DatabaseHelper.GetConnection())
-                        {
-                            // Start a transaction for data consistency
-                            connection.Open();
-                            using (var transaction = connection.BeginTransaction())
-                            {
-                                try
-                                {
+                        _appointmentRepository.DeleteAppointment(appointmentId);
 
-                                    connection.Execute("DELETE FROM AppointmentMessages WHERE appointmentId = @AppointmentId",
-                                                     new { AppointmentId = appointmentId }, transaction);
+                        LoadAppointments();
 
+                        dataGridViewAppointmentReplies.DataSource = null;
 
-                                    connection.Execute("DELETE FROM Appointments WHERE id = @AppointmentId",
-                                                     new { AppointmentId = appointmentId }, transaction);
-
-
-                                    transaction.Commit();
-
-                                    MessageBox.Show("Randevu ve ilişkili tüm mesajlar başarıyla silindi.",
-                                                  "İşlem Başarılı",
-                                                  MessageBoxButtons.OK,
-                                                  MessageBoxIcon.Information);
-
-
-                                    LoadAppointments();
-
-                                    dataGridViewAppointmentReplies.DataSource = null;
-                                }
-                                catch (Exception ex)
-                                {
-                                    // Rollback the transaction if an error occurs
-                                    transaction.Rollback();
-                                    MessageBox.Show($"Randevu silme işlemi sırasında bir hata oluştu: {ex.Message}",
-                                                  "Hata",
-                                                  MessageBoxButtons.OK,
-                                                  MessageBoxIcon.Error);
-                                }
-                            }
-                        }
                     }
                     catch (Exception ex)
                     {
@@ -533,7 +384,7 @@ namespace PipoBerberDesktop
         }
 
 
-        private void btnUpdateAppointment_Click(object sender, EventArgs e)
+        private async void btnUpdateAppointment_Click(object sender, EventArgs e)
         {
 
             if (dataGridViewAppointments.SelectedRows.Count == 0)
@@ -558,22 +409,13 @@ namespace PipoBerberDesktop
             {
                 try
                 {
-                    using (var connection = DatabaseHelper.GetConnection())
-                    {
+                    _appointmentRepository.UpdateAppointment(appointmentId, newStatus);
 
-                        string updateQuery = "UPDATE Appointments SET status = @Status WHERE id = @Id";
-
-                        connection.Execute(updateQuery, new
-                        {
-                            Status = newStatus,
-                            Id = appointmentId
-                        });
-
-                        MessageBox.Show("Randevu durumu başarıyla güncellendi.", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("Randevu durumu başarıyla güncellendi.", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
 
-                        LoadAppointments();
-                    }
+                    LoadAppointments();
+
                 }
                 catch (Exception ex)
                 {
@@ -582,7 +424,7 @@ namespace PipoBerberDesktop
             }
         }
 
-        private void btnSendReply_Click(object sender, EventArgs e)
+        private async void btnSendReply_Click(object sender, EventArgs e)
         {
 
             if (dataGridViewAppointments.SelectedRows.Count == 0)
@@ -603,30 +445,23 @@ namespace PipoBerberDesktop
 
             try
             {
-                using (var connection = DatabaseHelper.GetConnection())
+                _appointmentRepliesRepository.AddAppointmentReply(new AppointmentMessage
                 {
-
-                    string insertQuery = @"
-                INSERT INTO AppointmentMessages (appointmentId, senderId, text, createdAt)
-                VALUES (@AppointmentId, @SenderId, @Text, @CreatedAt)";
-
-                    connection.Execute(insertQuery, new
-                    {
-                        AppointmentId = appointmentId,
-                        SenderId = Session.UserId,
-                        Text = tbSendReply.Text.Trim(),
-                        CreatedAt = DateTime.Now
-                    });
+                    AppointmentId = appointmentId,
+                    SenderId = Session.UserId,
+                    Text = tbSendReply.Text.Trim(),
+                    CreatedAt = DateTime.Now
+                });
 
 
-                    MessageBox.Show("Yanıtınız başarıyla gönderildi.", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Yanıtınız başarıyla gönderildi.", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
 
-                    tbSendReply.Clear();
+                tbSendReply.Clear();
 
 
-                    LoadAppointmentReplies();
-                }
+               LoadAppointmentReplies();
+
             }
             catch (Exception ex)
             {
@@ -648,7 +483,7 @@ namespace PipoBerberDesktop
             var addForm = new AddEditTransactionForm();
             if (addForm.ShowDialog() == DialogResult.OK)
             {
-                await _repository.AddTransactionAsync(addForm.Transaction);
+                await _transactionRepository.AddTransactionAsync(addForm.Transaction);
                 await LoadTransactions();
             }
         }
@@ -674,7 +509,6 @@ namespace PipoBerberDesktop
             var editForm = new AddEditTransactionForm(transaction);
             if (editForm.ShowDialog() == DialogResult.OK)
             {
-                //await _repository.UpdateTransactionAsync(editForm.Transaction);
                 await LoadTransactions();
             }
         }
@@ -693,7 +527,7 @@ namespace PipoBerberDesktop
                 var selectedRow = dataGridViewTransactions.SelectedRows[0];
                 int id = (int)selectedRow.Cells["Id"].Value;
 
-                await _repository.DeleteTransactionAsync(id);
+                await _transactionRepository.DeleteTransactionAsync(id);
                 await LoadTransactions();
             }
         }
@@ -702,5 +536,24 @@ namespace PipoBerberDesktop
         {
             await LoadTransactions();
         }
+
+        private void tbAppointmentSearch_TextChanged(object sender, EventArgs e)
+        {
+            DataGridViewColumnConfigurator configurator = new DataGridViewColumnConfigurator(dataGridViewAppointments);
+            dataGridViewAppointments.DataSource = _appointmentRepository.GetFilteredAppointments(tbAppointmentSearch.Text.Trim().ToLower());
+            configurator.ConfigureAppointmentColumns();
+
+        }
+
+        private void dataGridViewUsers_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (dataGridViewUsers.Columns[e.ColumnIndex].Name == "Rol" && e.Value != null)
+            {
+                bool isAdmin = (bool)e.Value;
+                e.Value = isAdmin ? "Yönetici" : "Kullanıcı";
+                e.FormattingApplied = true;
+            }
+        }
+
     }
 }

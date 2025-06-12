@@ -97,6 +97,134 @@ namespace PipoBerberDesktop.Helpers.DataGridHelpers
                 MessageBox.Show($"Kolonları ayarlarken hata oluştu: {ex.Message}", "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+        public void ConfigureUsersColumns()
+        {
+            try
+            {
+                // Önce tüm sütunları sıfırlayalım
+                _dataGridView.AutoGenerateColumns = false;
+                // DataGridView'ı temizle
+                _dataGridView.Columns.Clear();
+
+                // Kolonları manuel olarak ekleyelim
+                DataGridViewTextBoxColumn nameColumn = new DataGridViewTextBoxColumn();
+                nameColumn.DataPropertyName = "name";
+                nameColumn.HeaderText = "Adı";
+                nameColumn.Name = "name";
+                nameColumn.Width = 120;
+                _dataGridView.Columns.Add(nameColumn);
+
+                DataGridViewTextBoxColumn surnameColumn = new DataGridViewTextBoxColumn();
+                surnameColumn.DataPropertyName = "surname";
+                surnameColumn.HeaderText = "Soyadı";
+                surnameColumn.Name = "surname";
+                surnameColumn.Width = 120;
+                _dataGridView.Columns.Add(surnameColumn);
+
+                DataGridViewTextBoxColumn emailColumn = new DataGridViewTextBoxColumn();
+                emailColumn.DataPropertyName = "email";
+                emailColumn.HeaderText = "E-posta";
+                emailColumn.Name = "email";
+                emailColumn.Width = 200;
+                _dataGridView.Columns.Add(emailColumn);
+
+                DataGridViewTextBoxColumn phoneColumn = new DataGridViewTextBoxColumn();
+                phoneColumn.DataPropertyName = "PhoneNumber";
+                phoneColumn.HeaderText = "Telefon Numarası";
+                phoneColumn.Name = "PhoneNumber";
+                phoneColumn.Width = 150;
+                _dataGridView.Columns.Add(phoneColumn);
+
+                // isAdmin kolonu - özel formatlamaya sahip
+                DataGridViewTextBoxColumn isAdminColumn = new DataGridViewTextBoxColumn();
+                isAdminColumn.DataPropertyName = "isAdmin";
+                isAdminColumn.HeaderText = "Rol";
+                isAdminColumn.Name = "isAdmin";
+                isAdminColumn.Width = 100;
+                _dataGridView.Columns.Add(isAdminColumn);
+
+                DataGridViewTextBoxColumn createdAtColumn = new DataGridViewTextBoxColumn();
+                createdAtColumn.DataPropertyName = "CreatedAt";
+                createdAtColumn.HeaderText = "Oluşturulma Zamanı";
+                createdAtColumn.Name = "CreatedAt";
+                createdAtColumn.Width = 150;
+                createdAtColumn.DefaultCellStyle.Format = "dd.MM.yyyy HH:mm";
+                _dataGridView.Columns.Add(createdAtColumn);
+
+                DataGridViewTextBoxColumn updatedAtColumn = new DataGridViewTextBoxColumn();
+                updatedAtColumn.DataPropertyName = "UpdatedAt";
+                updatedAtColumn.HeaderText = "Güncellenme Zamanı";
+                updatedAtColumn.Name = "UpdatedAt";
+                updatedAtColumn.Width = 150;
+                updatedAtColumn.DefaultCellStyle.Format = "dd.MM.yyyy HH:mm";
+                _dataGridView.Columns.Add(updatedAtColumn);
+
+                // Görünmez kolonlar
+                DataGridViewTextBoxColumn idColumn = new DataGridViewTextBoxColumn();
+                idColumn.DataPropertyName = "id";
+                idColumn.Name = "id";
+                idColumn.Visible = false;
+                _dataGridView.Columns.Add(idColumn);
+
+                DataGridViewTextBoxColumn passwordColumn = new DataGridViewTextBoxColumn();
+                passwordColumn.DataPropertyName = "password";
+                passwordColumn.Name = "password";
+                passwordColumn.Visible = false;
+                _dataGridView.Columns.Add(passwordColumn);
+
+                DataGridViewTextBoxColumn isGuestColumn = new DataGridViewTextBoxColumn();
+                isGuestColumn.DataPropertyName = "isGuest";
+                isGuestColumn.Name = "isGuest";
+                isGuestColumn.Visible = false;
+                _dataGridView.Columns.Add(isGuestColumn);
+
+                // Özel formatlamayı uygula
+                FormatRoleColumn();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Kullanıcı kolonlarını ayarlarken hata oluştu: {ex.Message}", "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void FormatRoleColumn()
+        {
+            try
+            {
+                _dataGridView.CellFormatting += (sender, e) =>
+                {
+                    // Önce isAdmin kolonunun var olup olmadığını kontrol et
+                    if (_dataGridView.Columns["isAdmin"] != null &&
+                        e.ColumnIndex == _dataGridView.Columns["isAdmin"].Index &&
+                        e.Value != null && e.Value is not string)
+                    {
+
+                            bool isAdmin = Convert.ToBoolean(e.Value);
+
+                        
+                        if (isAdmin)
+                        {
+                            e.Value = "Yönetici";
+                            e.CellStyle.ForeColor = Color.Blue;
+                            e.CellStyle.BackColor = Color.LightCyan;
+                            e.CellStyle.Font = new Font(_dataGridView.Font, FontStyle.Bold);
+                        }
+                        else
+                        {
+                            e.Value = "Kullanıcı";
+                            e.CellStyle.ForeColor = Color.Green;
+                            e.CellStyle.BackColor = Color.LightGreen;
+                            e.CellStyle.Font = new Font(_dataGridView.Font, FontStyle.Bold);
+                        }
+                        e.FormattingApplied = true;
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Rol kolonunu formatlarken hata oluştu: {ex.Message}", "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
         public void ConfigureAppointmentRepliesColumns()
         {
             try
@@ -257,20 +385,6 @@ namespace PipoBerberDesktop.Helpers.DataGridHelpers
                         e.Value = "Gider";
                 }
             };
-
-            // Color rows based on transaction type 
-            //_dataGridView.RowPrePaint += (s, e) =>
-            //{
-            //    if (e.RowIndex >= 0 && e.RowIndex < _dataGridView.Rows.Count)
-            //    {
-            //        var row = _dataGridView.Rows[e.RowIndex];
-            //        var type = row.Cells["Type"].Value?.ToString();
-            //        if (type == "income")
-            //            row.DefaultCellStyle.BackColor = Color.LightGreen;
-            //        else if (type == "expense")
-            //            row.DefaultCellStyle.BackColor = Color.LightCoral;
-            //    }
-            //};
         }
         private void FormatSenderRoleColumn()
         {
