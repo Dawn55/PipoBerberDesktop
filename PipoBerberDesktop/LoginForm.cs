@@ -17,6 +17,7 @@ namespace PipoBerberDesktop
             lblLogin.Font = new Font("Tahoma", 24, FontStyle.Bold);
            tbEmail.BackColor = Color.FromArgb(255, 255, 255);
            tbPassword.BackColor = Color.FromArgb(255, 255, 255);
+
         }
 
         private void btnLogin_Click(object sender, EventArgs e)
@@ -24,23 +25,19 @@ namespace PipoBerberDesktop
             using (var connection = DatabaseHelper.GetConnection())
             {
 
-                var user = connection.QueryFirstOrDefault(@"SELECT * FROM ""User"" WHERE email = @Email AND ""isAdmin"" = true",
+                var user = connection.QueryFirstOrDefault(@"SELECT * FROM Users WHERE email = @Email AND ""isAdmin"" = true",
                     new { Email = tbEmail.Text });
 
                 if (user != null)
                 {
 
-                    bool isPasswordValid = BCrypt.Net.BCrypt.Verify(tbPassword.Text, user.password);
-
-                    if (isPasswordValid)
+                    if (tbPassword.Text == user.password)
                     {
-                        Session.UserId = user.id;
+                        Session.UserId = Convert.ToInt32( user.id);
                         Session.UserName = user.name;
                         Session.UserSurname = user.surname;
                         Session.UserPhone = user.phone;
                         Session.UserEmail = user.email;
-                        Session.IsAdmin = user.isAdmin;
-                        Session.IsGuest = user.isGuest;
 
                         Console.WriteLine(Session.IsGuest);
 
@@ -48,9 +45,11 @@ namespace PipoBerberDesktop
                         this.Hide();
                         return;
                     }
+                    else
+                    {
+                        MessageBox.Show("Yetkili kullanýcý bulunamadý");
+                    }
                 }
-
-                MessageBox.Show("Yetkili kullanýcý bulunamadý");
             }
         }
 

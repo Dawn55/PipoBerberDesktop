@@ -7,16 +7,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Npgsql;
+using System.Data.SQLite;
 
 namespace PipoBerberDesktop.Repositories
 {
     public class AppointmentRepository
     {
-        private readonly NpgsqlConnection _connection;
+        private readonly SQLiteConnection _connection;
 
         public AppointmentRepository(string connectionString)
         {
-            _connection = new NpgsqlConnection(connectionString);
+            _connection = new SQLiteConnection(connectionString);
         }
         public List<dynamic> GetAllAppointments()
         {
@@ -31,12 +32,14 @@ namespace PipoBerberDesktop.Repositories
                 a.status,
                 a.token,
                 a.createdAt,
-                u.name + ' ' + u.surname as UserFullName
+                u.name,
+                u.surname
             FROM Appointments a
             INNER JOIN Users u ON a.userId = u.id
             ORDER BY a.date DESC, a.time DESC";
 
-            // Genişletilmiş veri modelini tutmak için anonim bir tip kullanıyoruz
+           
+
             var appointmentsWithUserNames = _connection.Query(query);
             return appointmentsWithUserNames.ToList();
         }

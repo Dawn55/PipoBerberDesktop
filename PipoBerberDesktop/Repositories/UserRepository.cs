@@ -6,6 +6,7 @@ using PipoBerberDesktop.Entities;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
+using System.Data.SQLite;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,10 +17,10 @@ namespace PipoBerberDesktop.Repositories
 
     public class UserRepository
     {
-        private readonly NpgsqlConnection _connection;
+        private readonly SQLiteConnection _connection;
         public UserRepository(string connectionString)
         {
-            _connection = new NpgsqlConnection(connectionString);
+            _connection = new SQLiteConnection(connectionString);
         }
 
         public List<User> GetAllUsers()

@@ -26,9 +26,9 @@ namespace PipoBerberDesktop.Helpers.DataGridHelpers
 
                 // Kolonları manuel olarak ekleyelim
                 DataGridViewTextBoxColumn userNameColumn = new DataGridViewTextBoxColumn();
-                userNameColumn.DataPropertyName = "UserFullName";
+                userNameColumn.DataPropertyName = "name";
                 userNameColumn.HeaderText = "Müşteri";
-                userNameColumn.Name = "UserFullName";
+                userNameColumn.Name = "name";
                 userNameColumn.Width = 150;
                 _dataGridView.Columns.Add(userNameColumn);
 
@@ -237,9 +237,9 @@ namespace PipoBerberDesktop.Helpers.DataGridHelpers
 
                 // Kolonları manuel olarak ekleyelim
                 DataGridViewTextBoxColumn senderNameColumn = new DataGridViewTextBoxColumn();
-                senderNameColumn.DataPropertyName = "SenderFullName";
+                senderNameColumn.DataPropertyName = "name";
                 senderNameColumn.HeaderText = "Gönderen";
-                senderNameColumn.Name = "SenderFullName";
+                senderNameColumn.Name = "name";
                 senderNameColumn.Width = 150;
                 _dataGridView.Columns.Add(senderNameColumn);
 

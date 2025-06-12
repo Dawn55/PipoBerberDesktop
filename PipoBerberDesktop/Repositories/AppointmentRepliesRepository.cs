@@ -7,15 +7,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Npgsql;
+using System.Data.SQLite;
 
 namespace PipoBerberDesktop.Repositories
 {
     public class AppointmentRepliesRepository
     {
-        private readonly NpgsqlConnection _connection;
+        private readonly SQLiteConnection _connection;
         public AppointmentRepliesRepository(string connectionString)
         {
-            _connection = new NpgsqlConnection(connectionString);
+            _connection = new SQLiteConnection(connectionString);
         }
         public List<dynamic> GetAppointRepliesByAppointmentId(int id)
         {
@@ -26,7 +27,7 @@ namespace PipoBerberDesktop.Repositories
                 am.senderId,
                 am.text,
                 am.createdAt,
-                u.name + ' ' + u.surname as SenderFullName,
+                u.name,
                 CASE WHEN u.isAdmin = 1 THEN 'Yönetici' ELSE 'Müşteri' END as SenderRole
             FROM AppointmentMessages am
             INNER JOIN Users u ON am.senderId = u.id
